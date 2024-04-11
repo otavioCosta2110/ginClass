@@ -1,13 +1,13 @@
 package controllers
 
 import (
-	"net/http"
-	"otaviocosta2110/ginClass/database"
-	"otaviocosta2110/ginClass/models"
-	"otaviocosta2110/ginClass/repositories"
+  "net/http"
+  "otaviocosta2110/ginClass/database"
+  "otaviocosta2110/ginClass/models"
+  "otaviocosta2110/ginClass/repositories"
 
-	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
+  "github.com/gin-gonic/gin"
+  "github.com/google/uuid"
 )
 
 func GetUserByEmail(c *gin.Context){
@@ -44,8 +44,8 @@ func GetAllUsers(c *gin.Context) {
   }
 
   if err := rows.Err(); err != nil {
-      c.IndentedJSON(http.StatusInternalServerError, gin.H{ "message": "Error iterating users" })
-      return
+    c.IndentedJSON(http.StatusInternalServerError, gin.H{ "message": "Error iterating users" })
+    return
   }
 
   c.IndentedJSON(http.StatusOK, users)
@@ -57,14 +57,18 @@ func CreateUser(c *gin.Context) {
 
   user.ID = uuid.New().String()
 
-  if user, _ := repositories.UserByEmail(user.Email); user != nil {
+  foundUser, _ := repositories.UserByEmail(user.Email);
+
+  if foundUser != nil {
+    println(foundUser)
     c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "User Already Exists"})
     return
   }
 
-  _, err := database.DB.Exec("INSERT INTO users (id, name, email, password) VALUES ($1, $2, $3, $4)", user.ID, user.Name, user.Email, user.Password)
+  _, err := database.DB.Exec("INSERT INTO users (id, name, email, password, isteacher) VALUES ($1, $2, $3, $4, $5)", user.ID, user.Name, user.Email, user.Password, user.IsTeacher)
 
   if err != nil {
+    println(err.Error())
     c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": "Error creating user"})
     return
   }

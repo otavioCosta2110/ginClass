@@ -8,7 +8,7 @@ import (
 )
 
 func UserByEmail(email string) (*models.User, error) {
-  rows, err := database.DB.Query("SELECT email FROM users")
+  rows, err := database.DB.Query("SELECT email FROM users WHERE email = $1", email)
 
   if err != nil {
     return nil, errors.New("Error getting user")
@@ -21,7 +21,7 @@ func UserByEmail(email string) (*models.User, error) {
     if err := rows.Scan(&user.Email); err != nil {
       return nil, errors.New("Error Scanning user")
     }
+    return &user, nil
   }
-
-  return &user, nil
+  return nil, nil
 }
