@@ -8,7 +8,7 @@ import (
 )
 
 func healthCheck(c *gin.Context){
-  c.IndentedJSON(http.StatusOK, gin.H{"message": "tudo show"})
+  c.IndentedJSON(http.StatusOK, gin.H{"message": "ok"})
 }
 
 func main(){
