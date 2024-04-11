@@ -4,12 +4,25 @@ import (
 	"net/http"
 	"otaviocosta2110/ginClass/database"
 	"otaviocosta2110/ginClass/models"
+	"otaviocosta2110/ginClass/repositories"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
 
-func GetUsers(c *gin.Context) {
+func GetUserByEmail(c *gin.Context){
+  email := c.Param("email")
+  println(email)
+  user, err := repositories.UserByEmail(email)
+
+  if err != nil {
+    c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": "Error getting user by email"})
+    panic(err)
+  }
+  c.IndentedJSON(http.StatusCreated, &user)
+}
+
+func GetAllUsers(c *gin.Context) {
   rows, err := database.DB.Query("SELECT id, name FROM users")
 
   if err != nil {
@@ -43,6 +56,11 @@ func CreateUser(c *gin.Context) {
   c.BindJSON(&user)
 
   user.ID = uuid.New().String()
+
+  if user, _ := repositories.UserByEmail(user.Email); user != nil {
+    c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "User Already Exists"})
+    return
+  }
 
   _, err := database.DB.Exec("INSERT INTO users (id, name, email, password) VALUES ($1, $2, $3, $4)", user.ID, user.Name, user.Email, user.Password)
 
