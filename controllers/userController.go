@@ -68,7 +68,6 @@ func CreateUser(c *gin.Context) {
   _, err := database.DB.Exec("INSERT INTO users (id, name, email, password, isteacher) VALUES ($1, $2, $3, $4, $5)", user.ID, user.Name, user.Email, user.Password, user.IsTeacher)
 
   if err != nil {
-    println(err.Error())
     c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": "Error creating user"})
     return
   }
