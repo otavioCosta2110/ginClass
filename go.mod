@@ -1,6 +1,6 @@
 module otaviocosta2110/ginClass
 
-go 1.22.2
+go 1.21.9
 
 require (
 	github.com/bytedance/sonic v1.9.1 // indirect

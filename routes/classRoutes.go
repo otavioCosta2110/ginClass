@@ -11,5 +11,6 @@ func ClassRoutes(router *gin.Engine){
   {
     classGroup.GET("/getall", controllers.GetAllClasses)
     classGroup.POST("/create", controllers.CreateClass)
+    classGroup.GET("/getbyteacher/:teacheremail", controllers.GetClassByTeacher)
   }
 }
