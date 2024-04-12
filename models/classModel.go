@@ -7,3 +7,8 @@ type Class struct {
   Students []string `json:"students"`
   Posts []string `json:"posts"`
 }
+
+type AddUser struct {
+  TeacherEmail string `json:"teacheremail"`
+  ClassID string `json:"classID"`
+}

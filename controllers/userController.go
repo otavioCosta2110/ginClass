@@ -12,7 +12,6 @@ import (
 
 func GetUserByEmail(c *gin.Context){
   email := c.Param("email")
-  println(email)
   user, err := repositories.UserByEmail(email)
 
   if err != nil {
@@ -60,7 +59,6 @@ func CreateUser(c *gin.Context) {
   foundUser, _ := repositories.UserByEmail(user.Email);
 
   if foundUser != nil {
-    println(foundUser)
     c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "User Already Exists"})
     return
   }

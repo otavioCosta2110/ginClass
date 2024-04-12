@@ -13,7 +13,7 @@ import (
 
 func GetClassByTeacher(c *gin.Context) {
   teacherEmail := c.Param("teacheremail")
-  println(teacherEmail)
+
   class, err := repositories.ClassByTeacher(teacherEmail)
 
   if err != nil {
@@ -25,13 +25,23 @@ func GetClassByTeacher(c *gin.Context) {
 }
 
 func AddTeacher(c *gin.Context) {
-  var teacher models.User
+  var body models.AddUser
+
+  c.BindJSON(&body)
+
+  teacher, err := repositories.UserByEmail(body.TeacherEmail)
+
+  if err != nil {
+    c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": "Error getting user!"})
+    panic(err)
+  }
 
   if !teacher.IsTeacher {
     c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "User is not a teacher!"})
     return
   }
 
+  repositories.AddUser(body.TeacherEmail, body.ClassID)
 
 }
 
