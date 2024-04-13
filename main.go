@@ -17,5 +17,6 @@ func main(){
   router.GET("/healthcheck", healthCheck)
   routes.UserRoutes(router)
   routes.ClassRoutes(router)
+  routes.PostRoutes(router)
   router.Run(":8080")
 }

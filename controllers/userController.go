@@ -18,7 +18,7 @@ func GetUserByEmail(c *gin.Context){
     c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": "Error getting user by email"})
     panic(err)
   }
-  c.IndentedJSON(http.StatusCreated, &user)
+  c.IndentedJSON(http.StatusOK, &user)
 }
 
 func GetAllUsers(c *gin.Context) {

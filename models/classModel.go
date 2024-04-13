@@ -6,6 +6,7 @@ type Class struct {
   Teachers []string `json:"teachers"`
   Students []string `json:"students"`
   Posts []string `json:"posts"`
+  Tags []string `json:"tags"`
 }
 
 type AddUser struct {

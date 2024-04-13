@@ -8,20 +8,20 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/lib/pq"
 )
 
 func GetClassByTeacher(c *gin.Context) {
   teacherEmail := c.Param("teacheremail")
+  println(teacherEmail)
 
-  class, err := repositories.ClassByTeacher(teacherEmail)
+  classes, err := repositories.ClassByTeacher(teacherEmail)
 
   if err != nil {
     c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": "Error getting class by teacher email"})
     panic(err)
   }
 
-  c.IndentedJSON(http.StatusCreated, &class)
+  c.IndentedJSON(http.StatusOK, &classes)
 }
 
 func AddTeacher(c *gin.Context) {
@@ -52,19 +52,49 @@ func CreateClass(c *gin.Context) {
 
   class.ID = uuid.NewString()
 
-  teachersArray := pq.Array(class.Teachers)
-  studentsArray := pq.Array(class.Students)
-  postsArray := pq.Array(class.Posts)
-
-  _, err := database.DB.Exec("INSERT INTO classes (id, name, teachers, students, posts) values ($1, $2, $3, $4, $5)", class.ID, class.Name, teachersArray, studentsArray, postsArray)
-
+  tx, err := database.DB.Begin()
   if err != nil {
-    println(err.Error(), class.Teachers)
     c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": "Error creating class"})
     return
   }
 
-  c.IndentedJSON(http.StatusCreated, class)
+  defer func(){
+    if err != nil {
+      tx.Rollback()
+      c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": "Error creating class"})
+      return
+    }
+    tx.Commit()
+  }()
+
+  _, err = database.DB.Exec("INSERT INTO classes (id, name) values ($1, $2)", class.ID, class.Name)
+
+  if err != nil {
+    c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": "Error creating class"})
+    return
+  }
+
+  for _, teacher := range class.Teachers {
+    teacherID, err := repositories.UserByEmail(teacher)
+
+    if teacherID == nil {
+      c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "Teacher with email " + teacher + " does not exist"})
+      return
+    }
+    if err != nil {
+      c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": "Error getting teacher ID"})
+      return
+    }
+
+    _, err = tx.Exec("INSERT INTO user_class (user_id, class_id) values ($1, $2)", teacherID.ID, class.ID)
+
+    if err != nil {
+      c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": "Error creating class"})
+      return
+    }
+  }
+
+  c.IndentedJSON(http.StatusCreated, class.Tags)
 }
 
 func GetAllClasses(c *gin.Context) {
