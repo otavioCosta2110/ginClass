@@ -1,13 +1,13 @@
 package controllers
 
 import (
-	"net/http"
-	"otaviocosta2110/ginClass/database"
-	"otaviocosta2110/ginClass/models"
-	"otaviocosta2110/ginClass/repositories"
+  "net/http"
+  "otaviocosta2110/ginClass/database"
+  "otaviocosta2110/ginClass/models"
+  "otaviocosta2110/ginClass/repositories"
 
-	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
+  "github.com/gin-gonic/gin"
+  "github.com/google/uuid"
 )
 
 func GetClassByTeacher(c *gin.Context) {
@@ -46,56 +46,81 @@ func AddTeacher(c *gin.Context) {
 }
 
 func CreateClass(c *gin.Context) {
-  var class models.Class
+    var class models.Class
 
-  c.BindJSON(&class)
+    c.BindJSON(&class)
 
-  class.ID = uuid.NewString()
+    class.ID = uuid.NewString()
 
-  tx, err := database.DB.Begin()
-  if err != nil {
-    c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": "Error creating class"})
-    return
-  }
+    users := append(class.Teachers, class.Students...)
 
-  defer func(){
+    tx, err := database.DB.Begin()
     if err != nil {
       tx.Rollback()
       c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": "Error creating class"})
       return
     }
-    tx.Commit()
-  }()
 
-  _, err = database.DB.Exec("INSERT INTO classes (id, name) values ($1, $2)", class.ID, class.Name)
+    defer func() {
+      if r := recover(); r != nil {
+        tx.Rollback()
+        c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": "Panic occurred. Transaction rolled back."})
+      }
+    }()
 
-  if err != nil {
-    c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": "Error creating class"})
-    return
-  }
-
-  for _, teacher := range class.Teachers {
-    teacherID, err := repositories.UserByEmail(teacher)
-
-    if teacherID == nil {
-      c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "Teacher with email " + teacher + " does not exist"})
-      return
-    }
+    _, err = tx.Exec("INSERT INTO classes (id, name) values ($1, $2)", class.ID, class.Name)
     if err != nil {
-      c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": "Error getting teacher ID"})
-      return
-    }
-
-    _, err = tx.Exec("INSERT INTO user_class (user_id, class_id) values ($1, $2)", teacherID.ID, class.ID)
-
-    if err != nil {
+      tx.Rollback()
       c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": "Error creating class"})
       return
     }
-  }
 
-  c.IndentedJSON(http.StatusCreated, class.Tags)
+    for _, userEmail := range  users {
+        user, err := repositories.UserByEmail(userEmail)
+        if user == nil {
+            tx.Rollback()
+            c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "User with email " + userEmail + " does not exist"})
+            return
+        }
+        if err != nil {
+            tx.Rollback()
+            c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": "Error getting teacher ID"})
+            return
+        }
+        _, err = tx.Exec("INSERT INTO user_class (user_id, class_id) values ($1, $2)", user.ID, class.ID)
+        if err != nil {
+            tx.Rollback()
+            c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": "Error creating class"})
+            return
+        }
+    }
+    
+    for _, tagContent := range class.Tags {
+      tagID, err := repositories.CreateTags(tagContent, tx, c)
+      if err != nil {
+        tx.Rollback()
+        c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": "Error creating tag"})
+        return
+      }
+
+      _, err = tx.Exec("INSERT INTO class_tag (class_id, tag_id) values ($1, $2)", class.ID, tagID)
+      if err != nil {
+        tx.Rollback()
+        c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": "Error creating class_tag"})
+        return
+      }
+    }
+
+    err = tx.Commit()
+    if err != nil {
+        tx.Rollback()
+        c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": "Error committing transaction"})
+        return
+    }
+
+    c.IndentedJSON(http.StatusCreated, class)
 }
+
 
 func GetAllClasses(c *gin.Context) {
   rows, err := database.DB.Query("SELECT id, name FROM classes")

@@ -5,7 +5,6 @@ type Class struct {
   Name string `json:"name"`
   Teachers []string `json:"teachers"`
   Students []string `json:"students"`
-  Posts []string `json:"posts"`
   Tags []string `json:"tags"`
 }
 
