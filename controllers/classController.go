@@ -1,13 +1,13 @@
 package controllers
 
 import (
-  "net/http"
-  "otaviocosta2110/ginClass/database"
-  "otaviocosta2110/ginClass/models"
-  "otaviocosta2110/ginClass/repositories"
+	"net/http"
+	"otaviocosta2110/ginClass/database"
+	"otaviocosta2110/ginClass/models"
+	"otaviocosta2110/ginClass/repositories"
 
-  "github.com/gin-gonic/gin"
-  "github.com/google/uuid"
+	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 func GetClassByTeacher(c *gin.Context) {
@@ -121,6 +121,33 @@ func CreateClass(c *gin.Context) {
     c.IndentedJSON(http.StatusCreated, class)
 }
 
+func DeleteClass(c *gin.Context) {
+  classID := c.Param("id")
+
+  isClassDeleted, err := repositories.IsClassDeleted(classID)
+  println("IsClassDeleted: ", isClassDeleted)
+  if err != nil {
+    println("error: ", err.Error())
+    c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": "Error deleting class"})
+    return
+  }
+
+  println("IsClassDeleted: ", isClassDeleted)
+
+  if !isClassDeleted {
+    _, err := database.DB.Exec("UPDATE classes SET deleted_at = NOW() WHERE id = $1", classID)
+
+    if err != nil {
+      c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": "Error deleting class"})
+      return
+    }
+  }else{
+    c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": "Class already deleted"})
+  }
+
+
+  c.IndentedJSON(http.StatusNoContent, gin.H{})
+}
 
 func GetAllClasses(c *gin.Context) {
   rows, err := database.DB.Query("SELECT id, name FROM classes")

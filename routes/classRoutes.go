@@ -12,6 +12,7 @@ func ClassRoutes(router *gin.Engine){
     classGroup.GET("/getall", controllers.GetAllClasses)
     classGroup.POST("/create", controllers.CreateClass)
     classGroup.PUT("/addteacher", controllers.AddTeacher)
+    classGroup.PUT("/delete/:id", controllers.DeleteClass)
     classGroup.GET("/getbyteacher/:teacheremail", controllers.GetClassByTeacher)
   }
 }
