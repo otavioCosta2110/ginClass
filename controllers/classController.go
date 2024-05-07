@@ -29,7 +29,7 @@ func AddTeacher(c *gin.Context) {
 
   c.BindJSON(&body)
 
-  teacher, err := repositories.UserByEmail(body.TeacherEmail)
+  teacher, err := repositories.GetUserByEmail(body.TeacherEmail)
 
   if err != nil {
     c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": "Error getting user!"})
@@ -81,7 +81,7 @@ func CreateClass(c *gin.Context) {
     }
 
     for _, userEmail := range  users {
-        user, err := repositories.UserByEmail(userEmail)
+        user, err := repositories.GetUserByEmail(userEmail)
         if user == nil {
             tx.Rollback()
             c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "User with email " + userEmail + " does not exist"})

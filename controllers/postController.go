@@ -19,6 +19,10 @@ func CreatePost(c *gin.Context){
 
   c.BindJSON(&post)
 
+  if  len(post.Teachers) < 0 || post.Content == "" || post.Name == "" {
+    c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": "Missing Fields"})
+    return
+  }
   post.ID =uuid.NewString()
 
   tx, err := database.DB.Begin()
@@ -61,7 +65,7 @@ func CreatePost(c *gin.Context){
   }
 
   for _, userEmail := range post.Teachers {
-    user, err := repositories.UserByEmail(userEmail)
+    user, err := repositories.GetUserByEmail(userEmail)
     _, err = database.DB.Query("INSERT INTO user_post (user_id, post_id) values ($1, $2)", user.ID, post.ID)
 
     if err != nil {
