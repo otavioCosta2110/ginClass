@@ -53,6 +53,10 @@ func GetAllUsers(c *gin.Context) {
 func CreateUser(c *gin.Context) {
   var user models.User
   c.BindJSON(&user)
+  if user.Email == ""|| user.Name == "" || user.Password == "" {
+    c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "Missing Fields"})
+    return
+  }
 
   user.ID = uuid.New().String()
 

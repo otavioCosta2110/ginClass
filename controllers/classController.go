@@ -50,6 +50,11 @@ func CreateClass(c *gin.Context) {
 
     c.BindJSON(&class)
 
+    if len(class.Teachers) < 1 || class.Name == "" {
+      c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": "Missing Fields"})
+      return
+    }
+
     class.ID = uuid.NewString()
 
     users := append(class.Teachers, class.Students...)
