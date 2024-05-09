@@ -1,14 +1,20 @@
 package repositories
 
 import (
-	"database/sql"
-	"errors"
-	"otaviocosta2110/ginClass/database"
-	"otaviocosta2110/ginClass/models"
+  "database/sql"
+  "errors"
+  "otaviocosta2110/ginClass/database"
+  "otaviocosta2110/ginClass/models"
 )
 
-func ClassByTeacher(teacherEmail string) (*[]models.Class, error){
-  rows, err := database.DB.Query("SELECT name FROM classes WHERE $1 = ANY(teachers)", teacherEmail)
+func GetClassByTeacher(teacherEmail string) (*[]models.Class, error){
+  teacher, err := GetUserByEmail(teacherEmail)
+
+  if err != nil {
+    return nil, errors.New("Error Getting Class")
+  }
+
+  rows, err := database.DB.Query("SELECT class_id FROM user_class WHERE user_id = $1", teacher.ID)
   if err != nil {
     return nil, errors.New("Error Getting Class")
   }
@@ -18,11 +24,21 @@ func ClassByTeacher(teacherEmail string) (*[]models.Class, error){
   var classes []models.Class
 
   for rows.Next() {
-    if err := rows.Scan(&class.Name); err != nil {
+    if err := rows.Scan(&class.ID); err != nil {
+      return nil, errors.New("Error Scanning classes")
+    }
+
+    nameRow, err := database.DB.Query("SELECT name FROM classes WHERE id = $1", class.ID)
+    if err != nil {
+      return nil, errors.New("Error Getting Class")
+    }
+    nameRow.Next()
+    if err := nameRow.Scan(&class.Name); err != nil {
       return nil, errors.New("Error Scanning classes")
     }
     classes = append(classes, class)
   }
+  println(classes)
   return &classes, nil
 }
 

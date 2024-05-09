@@ -5,6 +5,7 @@ import (
 	"otaviocosta2110/ginClass/database"
 	"otaviocosta2110/ginClass/models"
 	"otaviocosta2110/ginClass/repositories"
+	"otaviocosta2110/ginClass/services"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -12,13 +13,11 @@ import (
 
 func GetClassByTeacher(c *gin.Context) {
   teacherEmail := c.Param("teacheremail")
-  println(teacherEmail)
 
-  classes, err := repositories.ClassByTeacher(teacherEmail)
+  classes, err := services.GetClassByTeacher(teacherEmail)
 
   if err != nil {
-    c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": "Error getting class by teacher email"})
-    panic(err)
+    c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
   }
 
   c.IndentedJSON(http.StatusOK, &classes)
