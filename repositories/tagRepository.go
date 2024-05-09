@@ -2,30 +2,25 @@ package repositories
 
 import (
 	"database/sql"
-	"net/http"
+	"errors"
 
-	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
 
-func CreateTags (tagContent string, tx *sql.Tx, c *gin.Context) (string, error) {
+func CreateTags (tagContent string, tx *sql.Tx) (string, error) {
   
   tagID, tagExists, err := TagExists(tagContent, tx)
 
-  println("tagID", tagID)
   if err != nil {
     tx.Rollback()
-    c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": "Error checking if tag exists"})
-    return "", err
+    return "", errors.New("Error checking if tag exists")
   }
 
   if !tagExists {
     _, err = tx.Exec("INSERT INTO tags (id, name) values ($1, $2)", tagID, tagContent)
     if err != nil {
       tx.Rollback()
-      print("error", err.Error())
-      c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": "Error creating tag"})
-      return "", err
+      return "", errors.New("Error creating tags")
     }
   }
 

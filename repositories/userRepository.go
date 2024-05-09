@@ -70,12 +70,3 @@ func CreateUser(user models.User) ( error) {
   return nil
 }
 
-func AddUser(teacherEmail string, classID string) (error) {
-  println(classID)
-  _, err := database.DB.Exec("UPDATE classes SET teachers = array_append(teachers, $1) WHERE id = $2", teacherEmail, classID)
-
-  if err != nil {
-    return err
-  }
-  return nil
-}

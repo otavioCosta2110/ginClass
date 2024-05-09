@@ -1,10 +1,10 @@
 package repositories
 
 import (
-  "database/sql"
-  "errors"
-  "otaviocosta2110/ginClass/database"
-  "otaviocosta2110/ginClass/models"
+	"database/sql"
+	"errors"
+	"otaviocosta2110/ginClass/database"
+	"otaviocosta2110/ginClass/models"
 )
 
 func GetClassByTeacher(teacherEmail string) (*[]models.Class, error){
@@ -54,4 +54,75 @@ func IsClassDeleted(id string) (bool, error) {
   }
 
   return deleted.Valid, nil
+}
+
+func AddUser(teacherID string, classID string) (error) {
+  println(classID)
+  _, err := database.DB.Exec("INSERT INTO user_class (user_id, class_id) values ($1, $2)", teacherID, classID)
+
+  if err != nil {
+    return errors.New("Error inserting user into database")
+  }
+  return nil
+}
+
+
+func CreateClass(class models.Class, users []string) (error){
+    tx, err := database.DB.Begin()
+    if err != nil {
+      tx.Rollback()
+      return errors.New("Error connecting to database")
+    }
+
+    // defer func() {
+    //   if r := recover(); r != nil {
+    //     tx.Rollback()
+    //     return errors.New("Error connecting to database")
+    //   }
+    // }()
+
+    _, err = tx.Exec("INSERT INTO classes (id, name) values ($1, $2)", class.ID, class.Name)
+    if err != nil {
+      tx.Rollback()
+      return errors.New("Error creating class")
+    }
+
+
+    for _, userEmail := range users {
+        user, err := GetUserByEmail(userEmail)
+        if user == nil {
+            tx.Rollback()
+            return errors.New("User with email " + userEmail + " does not exist")
+        }
+        if err != nil {
+            tx.Rollback()
+            return errors.New("Error getting teacher ID")
+        }
+        _, err = tx.Exec("INSERT INTO user_class (user_id, class_id) values ($1, $2)", user.ID, class.ID)
+        if err != nil {
+            tx.Rollback()
+            return errors.New("Error creating class")
+        }
+    }
+    
+    for _, tagContent := range class.Tags {
+      tagID, err := CreateTags(tagContent, tx)
+      if err != nil {
+        tx.Rollback()
+        return errors.New("Error creating tag")
+      }
+
+      _, err = tx.Exec("INSERT INTO class_tag (class_id, tag_id) values ($1, $2)", class.ID, tagID)
+      if err != nil {
+        tx.Rollback()
+        return errors.New("Error creating class_tag")
+      }
+    }
+
+    err = tx.Commit()
+    if err != nil {
+        tx.Rollback()
+        return errors.New("Error committing transaction")
+    }
+    return nil
 }

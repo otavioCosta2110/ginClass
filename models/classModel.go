@@ -10,5 +10,5 @@ type Class struct {
 
 type AddUser struct {
   TeacherEmail string `json:"teacheremail"`
-  ClassID string `json:"classID"`
+  ClassID string `json:"classid"`
 }

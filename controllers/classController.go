@@ -27,21 +27,12 @@ func AddTeacher(c *gin.Context) {
   var body models.AddUser
 
   c.BindJSON(&body)
-
-  teacher, err := repositories.GetUserByEmail(body.TeacherEmail)
-
-  if err != nil {
-    c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": "Error getting user!"})
-    panic(err)
+  
+  err := services.AddTeacher(body)
+  if err != nil{
+    c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
   }
-
-  if !teacher.IsTeacher {
-    c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "User is not a teacher!"})
-    return
-  }
-
-  repositories.AddUser(body.TeacherEmail, body.ClassID)
-
+  c.IndentedJSON(http.StatusOK, gin.H{"message": "User Added!"})
 }
 
 func CreateClass(c *gin.Context) {
@@ -100,7 +91,7 @@ func CreateClass(c *gin.Context) {
     }
     
     for _, tagContent := range class.Tags {
-      tagID, err := repositories.CreateTags(tagContent, tx, c)
+      tagID, err := repositories.CreateTags(tagContent, tx)
       if err != nil {
         tx.Rollback()
         c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": "Error creating tag"})
