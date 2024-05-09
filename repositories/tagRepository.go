@@ -3,6 +3,8 @@ package repositories
 import (
 	"database/sql"
 	"errors"
+	"otaviocosta2110/ginClass/database"
+	"otaviocosta2110/ginClass/models"
 
 	"github.com/google/uuid"
 )
@@ -41,4 +43,27 @@ func TagExists(tagContent string, tx *sql.Tx) (string, bool, error) {
 
   print("Tag exists")
   return id, true, nil
+}
+
+func GetTagByID(id string) (*models.Tag, error){
+  rows, err := database.DB.Query("SELECT id, name FROM tags WHERE id = $1", id)
+  
+  if err != nil{
+    return nil, errors.New("Error getting tag")
+  }
+
+  defer rows.Close()
+  var tag models.Tag
+
+  for rows.Next() {
+
+    if err := rows.Scan(&tag.ID, &tag.Content); err != nil {
+      return nil, err
+    }
+  
+    return &tag, nil
+    
+  }
+
+  return nil, nil
 }

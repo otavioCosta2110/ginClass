@@ -29,6 +29,28 @@ func GetUserByEmail(email string) (*models.User, error) {
 
   return nil, nil
 }
+func GetUserByID(id string) (*models.User, error) {
+  rows, err := database.DB.Query("SELECT id, email, name, isteacher FROM users WHERE id = $1", id)
+
+  if err != nil {
+    return nil, errors.New("Error getting user")
+  }
+
+  defer rows.Close()
+  var user models.User
+
+  for rows.Next() {
+
+    if err := rows.Scan(&user.ID, &user.Email, &user.Name, &user.IsTeacher); err != nil {
+      return nil, errors.New("Error Scanning user")
+    }
+  
+    return &user, nil
+    
+  }
+
+  return nil, nil
+}
 
 func GetAllUsers() (*[]models.User, error){
   rows, err := database.DB.Query("SELECT id, name FROM users")

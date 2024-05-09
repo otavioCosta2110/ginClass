@@ -47,7 +47,7 @@ func CreatePost(c *gin.Context){
   }
 
   for _, tagContent := range post.Tags {
-    tagID, err := repositories.CreateTags(tagContent, tx, c)
+    tagID, err := repositories.CreateTags(tagContent, tx)
 
     if err != nil {
       tx.Rollback()

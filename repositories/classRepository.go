@@ -1,10 +1,10 @@
 package repositories
 
 import (
-	"database/sql"
-	"errors"
-	"otaviocosta2110/ginClass/database"
-	"otaviocosta2110/ginClass/models"
+  "database/sql"
+  "errors"
+  "otaviocosta2110/ginClass/database"
+  "otaviocosta2110/ginClass/models"
 )
 
 func GetClassByTeacher(teacherEmail string) (*[]models.Class, error){
@@ -68,61 +68,127 @@ func AddUser(teacherID string, classID string) (error) {
 
 
 func CreateClass(class models.Class, users []string) (error){
-    tx, err := database.DB.Begin()
+  tx, err := database.DB.Begin()
+  if err != nil {
+    tx.Rollback()
+    return errors.New("Error connecting to database")
+  }
+
+  // defer func() {
+  //   if r := recover(); r != nil {
+  //     tx.Rollback()
+  //     return errors.New("Error connecting to database")
+  //   }
+  // }()
+
+  _, err = tx.Exec("INSERT INTO classes (id, name) values ($1, $2)", class.ID, class.Name)
+  if err != nil {
+    tx.Rollback()
+    return errors.New("Error creating class")
+  }
+
+
+  for _, userEmail := range users {
+    user, err := GetUserByEmail(userEmail)
+    if user == nil {
+      tx.Rollback()
+      return errors.New("User with email " + userEmail + " does not exist")
+    }
     if err != nil {
       tx.Rollback()
-      return errors.New("Error connecting to database")
+      return errors.New("Error getting teacher ID")
     }
-
-    // defer func() {
-    //   if r := recover(); r != nil {
-    //     tx.Rollback()
-    //     return errors.New("Error connecting to database")
-    //   }
-    // }()
-
-    _, err = tx.Exec("INSERT INTO classes (id, name) values ($1, $2)", class.ID, class.Name)
+    _, err = tx.Exec("INSERT INTO user_class (user_id, class_id) values ($1, $2)", user.ID, class.ID)
     if err != nil {
       tx.Rollback()
       return errors.New("Error creating class")
     }
+  }
 
-
-    for _, userEmail := range users {
-        user, err := GetUserByEmail(userEmail)
-        if user == nil {
-            tx.Rollback()
-            return errors.New("User with email " + userEmail + " does not exist")
-        }
-        if err != nil {
-            tx.Rollback()
-            return errors.New("Error getting teacher ID")
-        }
-        _, err = tx.Exec("INSERT INTO user_class (user_id, class_id) values ($1, $2)", user.ID, class.ID)
-        if err != nil {
-            tx.Rollback()
-            return errors.New("Error creating class")
-        }
-    }
-    
-    for _, tagContent := range class.Tags {
-      tagID, err := CreateTags(tagContent, tx)
-      if err != nil {
-        tx.Rollback()
-        return errors.New("Error creating tag")
-      }
-
-      _, err = tx.Exec("INSERT INTO class_tag (class_id, tag_id) values ($1, $2)", class.ID, tagID)
-      if err != nil {
-        tx.Rollback()
-        return errors.New("Error creating class_tag")
-      }
-    }
-
-    err = tx.Commit()
+  for _, tagContent := range class.Tags {
+    tagID, err := CreateTags(tagContent, tx)
     if err != nil {
-        tx.Rollback()
-        return errors.New("Error committing transaction")
+      tx.Rollback()
+      return errors.New("Error creating tag")
     }
-    return nil
+
+    _, err = tx.Exec("INSERT INTO class_tag (class_id, tag_id) values ($1, $2)", class.ID, tagID)
+    if err != nil {
+      tx.Rollback()
+      return errors.New("Error creating class_tag")
+    }
+  }
+
+  err = tx.Commit()
+  if err != nil {
+    tx.Rollback()
+    return errors.New("Error committing transaction")
+  }
+  return nil
+}
+
+// also return teachers and students 
+func GetAllClasses() (*[]models.Class, error) {
+  rows, err := database.DB.Query("SELECT id, name FROM classes")
+
+  if err != nil {
+    return nil, errors.New("Error getting classes")
+  }
+
+  defer rows.Close()
+
+  var classes []models.Class
+
+  for rows.Next() {
+    var class models.Class
+    if err := rows.Scan(&class.ID, &class.Name); err != nil{
+      return nil, errors.New("Error scanning classes")
+    }
+    userRow, err := database.DB.Query("SELECT user_id FROM user_class WHERE class_id = $1", class.ID)
+    if err != nil{
+      return nil, errors.New("Error getting users")
+    }
+    for userRow.Next() {
+      var userID string
+      if err := userRow.Scan(&userID); err != nil{
+        return nil, errors.New("Error scanning users")
+      }
+      user, err := GetUserByID(userID)
+      if err != nil {
+        return nil, err
+      }
+
+      if user.IsTeacher{
+        class.Teachers = append(class.Teachers, user.ID)
+      }else {
+        class.Students = append(class.Teachers, user.ID)
+      }
+    }
+    tagsRow, err := database.DB.Query("SELECT tag_id FROM class_tag WHERE class_id = $1", class.ID)
+    if err != nil{
+      return nil, errors.New("Error getting users")
+    }
+    for tagsRow.Next() {
+      var tagID string
+      if err := tagsRow.Scan(&tagID); err != nil{
+        return nil, errors.New("Error scanning tags")
+      }
+      tag, err := GetTagByID(tagID)
+      if err != nil {
+        return nil, err
+      }
+      class.Tags = append(class.Tags, tag.Content)
+    }
+
+    if err != nil {
+      return nil, errors.New("Error getting classes")
+    }
+    classes = append(classes, class)
+  }
+
+  if err := rows.Err(); err != nil {
+    return nil, errors.New("Error iterating classes")
+  }
+
+  return &classes, nil
 }

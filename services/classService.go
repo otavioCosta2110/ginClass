@@ -19,18 +19,21 @@ func GetClassByTeacher(teacherEmail string) (*[]models.Class, error) {
   return classes, err
 }
 
-func CreateClass(class models.Class) (*models.Class, error){
+func CreateClass(class models.Class) (error){
     if len(class.Teachers) < 1 || class.Name == "" {
-      return nil, errors.New("Missing fields")
+      return errors.New("Missing fields")
     }
 
     class.ID = uuid.NewString()
 
     users := append(class.Teachers, class.Students...)
 
-    repositories.CreateClass(class, users)
+    err := repositories.CreateClass(class, users)
+    if err != nil{
+      return err
+    }
 
-    return &class, nil
+    return nil
 }
 
 func AddTeacher(body models.AddUser) (error){
@@ -50,4 +53,13 @@ func AddTeacher(body models.AddUser) (error){
   }
   return nil
 
+}
+
+func GetAllClasses() (*[]models.Class, error){
+  classes, err := repositories.GetAllClasses()
+  if err != nil {
+    return nil, err
+  }
+
+  return classes, nil
 }

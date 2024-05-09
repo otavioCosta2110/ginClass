@@ -8,7 +8,6 @@ import (
 	"otaviocosta2110/ginClass/services"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 )
 
 func GetClassByTeacher(c *gin.Context) {
@@ -39,79 +38,11 @@ func CreateClass(c *gin.Context) {
     var class models.Class
 
     c.BindJSON(&class)
-
-    if len(class.Teachers) < 1 || class.Name == "" {
-      c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": "Missing Fields"})
-      return
+    err := services.CreateClass(class)
+    if err != nil{
+      c.IndentedJSON(http.StatusInternalServerError, err)
     }
 
-    class.ID = uuid.NewString()
-
-    users := append(class.Teachers, class.Students...)
-
-    tx, err := database.DB.Begin()
-    if err != nil {
-      tx.Rollback()
-      c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": "Error creating class"})
-      return
-    }
-
-    defer func() {
-      if r := recover(); r != nil {
-        tx.Rollback()
-        c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": "Panic occurred. Transaction rolled back."})
-      }
-    }()
-
-    _, err = tx.Exec("INSERT INTO classes (id, name) values ($1, $2)", class.ID, class.Name)
-    if err != nil {
-      tx.Rollback()
-      c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": "Error creating class"})
-      return
-    }
-
-    for _, userEmail := range  users {
-        user, err := repositories.GetUserByEmail(userEmail)
-        if user == nil {
-            tx.Rollback()
-            c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "User with email " + userEmail + " does not exist"})
-            return
-        }
-        if err != nil {
-            tx.Rollback()
-            c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": "Error getting teacher ID"})
-            return
-        }
-        _, err = tx.Exec("INSERT INTO user_class (user_id, class_id) values ($1, $2)", user.ID, class.ID)
-        if err != nil {
-            tx.Rollback()
-            c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": "Error creating class"})
-            return
-        }
-    }
-    
-    for _, tagContent := range class.Tags {
-      tagID, err := repositories.CreateTags(tagContent, tx)
-      if err != nil {
-        tx.Rollback()
-        c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": "Error creating tag"})
-        return
-      }
-
-      _, err = tx.Exec("INSERT INTO class_tag (class_id, tag_id) values ($1, $2)", class.ID, tagID)
-      if err != nil {
-        tx.Rollback()
-        c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": "Error creating class_tag"})
-        return
-      }
-    }
-
-    err = tx.Commit()
-    if err != nil {
-        tx.Rollback()
-        c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": "Error committing transaction"})
-        return
-    }
 
     c.IndentedJSON(http.StatusCreated, class)
 }
@@ -145,28 +76,9 @@ func DeleteClass(c *gin.Context) {
 }
 
 func GetAllClasses(c *gin.Context) {
-  rows, err := database.DB.Query("SELECT id, name FROM classes")
-
-  if err != nil {
-    c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": "Error getting classes"})
-    return 
-  }
-
-  defer rows.Close()
-
-  var classes []models.Class
-
-  for rows.Next() {
-    var class models.Class
-    if err := rows.Scan(&class.ID, &class.Name); err != nil{
-      c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": "Error scanning classes"})
-      return
-    }
-    classes = append(classes, class)
-  }
-
-  if err := rows.Err(); err != nil {
-    c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": "Error iterating classes"})
+  classes, err := services.GetAllClasses()
+  if err != nil{
+    c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
     return
   }
 
