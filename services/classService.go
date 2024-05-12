@@ -63,3 +63,24 @@ func GetAllClasses() (*[]models.Class, error){
 
   return classes, nil
 }
+
+func DeleteClass(classID string) (*models.Class, error){
+  isClassDeleted, err := repositories.IsClassDeleted(classID)
+  if err != nil {
+    return nil, err
+  }
+
+
+  if !isClassDeleted {
+    class, err := repositories.DeleteClass(classID)
+
+    if err != nil {
+      return nil, err
+    }
+    return class, nil
+  }else{
+    return nil, errors.New("Class already deleted")
+  }
+
+
+}

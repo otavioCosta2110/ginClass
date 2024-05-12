@@ -42,6 +42,30 @@ func GetClassByTeacher(teacherEmail string) (*[]models.Class, error){
   return &classes, nil
 }
 
+func GetClassByID(classID string) (*models.Class, error){
+  rows, err := database.DB.Query("SELECT id, name FROM classes WHERE id = $1", classID)
+
+  if err != nil {
+    return nil, errors.New("Error getting class")
+  }
+
+  defer rows.Close()
+  var class models.Class
+
+  for rows.Next() {
+
+    if err := rows.Scan(&class.ID, &class.Name); err != nil {
+      return nil, errors.New("Error Scanning class")
+    }
+  
+    return &class, nil
+    
+  }
+
+  return nil, nil
+
+}
+
 func IsClassDeleted(id string) (bool, error) {
   var deleted sql.NullTime
 
@@ -127,7 +151,6 @@ func CreateClass(class models.Class, users []string) (error){
   return nil
 }
 
-// also return teachers and students 
 func GetAllClasses() (*[]models.Class, error) {
   rows, err := database.DB.Query("SELECT id, name FROM classes")
 
@@ -159,9 +182,9 @@ func GetAllClasses() (*[]models.Class, error) {
       }
 
       if user.IsTeacher{
-        class.Teachers = append(class.Teachers, user.ID)
+        class.Teachers = append(class.Teachers, user.Email)
       }else {
-        class.Students = append(class.Teachers, user.ID)
+        class.Students = append(class.Teachers, user.Email)
       }
     }
     tagsRow, err := database.DB.Query("SELECT tag_id FROM class_tag WHERE class_id = $1", class.ID)
@@ -191,4 +214,20 @@ func GetAllClasses() (*[]models.Class, error) {
   }
 
   return &classes, nil
+}
+
+func DeleteClass(classID string)(*models.Class, error){
+
+  _, err := database.DB.Exec("UPDATE classes SET deleted_at = NOW() WHERE id = $1", classID)
+
+  if err != nil {
+    return nil, errors.New("Error deleting class")
+  } 
+  class, err := GetClassByID(classID)
+
+  if err != nil {
+    return nil, err
+  }
+
+  return class, nil
 }
