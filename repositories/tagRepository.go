@@ -41,7 +41,6 @@ func TagExists(tagContent string, tx *sql.Tx) (string, bool, error) {
     return "", false, err
   }
 
-  print("Tag exists")
   return id, true, nil
 }
 

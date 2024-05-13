@@ -27,7 +27,7 @@ func GetUserByEmail(email string) (*models.User, error) {
     
   }
 
-  return nil, nil
+  return nil, errors.New("User does not exist")
 }
 func GetUserByID(id string) (*models.User, error) {
   rows, err := database.DB.Query("SELECT id, email, name, isteacher FROM users WHERE id = $1", id)

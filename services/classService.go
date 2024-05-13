@@ -81,6 +81,4 @@ func DeleteClass(classID string) (*models.Class, error){
   }else{
     return nil, errors.New("Class already deleted")
   }
-
-
 }
