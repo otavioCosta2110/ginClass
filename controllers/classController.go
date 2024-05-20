@@ -38,7 +38,8 @@ func CreateClass(c *gin.Context) {
     c.BindJSON(&class)
     err := services.CreateClass(class)
     if err != nil{
-      c.IndentedJSON(http.StatusInternalServerError, err)
+      c.IndentedJSON(http.StatusInternalServerError, err.Error())
+      return
     }
 
 

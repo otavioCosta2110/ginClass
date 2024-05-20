@@ -9,7 +9,26 @@ import (
 )
 
 func GetPostByClass(c *gin.Context){
+  classID := c.Param("class")
+  posts, err := services.GetPostByClass(classID)
 
+  if err != nil {
+    c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+  }
+
+  c.IndentedJSON(http.StatusOK, gin.H{"data": posts})
+}
+
+func GetPostById(c *gin.Context){
+  id := c.Param("id")
+  post, err := services.GetPostById(id)
+
+  if err != nil {
+    c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+    return
+  }
+
+  c.IndentedJSON(http.StatusOK, gin.H{"data": post})
 }
 
 func CreatePost(c *gin.Context){

@@ -3,6 +3,8 @@ package main
 import (
 	"net/http"
 	"otaviocosta2110/ginClass/routes"
+  "github.com/gin-contrib/cors"
+
 
 	"github.com/gin-gonic/gin"
 )
@@ -13,6 +15,8 @@ func healthCheck(c *gin.Context){
 
 func main(){
   router := gin.Default()
+
+  router.Use(cors.Default())
 
   router.GET("/healthcheck", healthCheck)
   routes.UserRoutes(router)

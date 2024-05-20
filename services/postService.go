@@ -8,6 +8,25 @@ import (
 	"github.com/google/uuid"
 )
 
+func GetPostByClass(classID string) ([]models.Post, error){
+  posts, err := repositories.GetPostByClass(classID)
+
+  if err != nil {
+    return nil, errors.New("Error getting posts")
+  }
+
+  return posts, nil
+}
+
+func GetPostById(id string) (*models.Post, error){
+  post, err := repositories.GetPostById(id)
+
+  if err != nil {
+    return nil, errors.New("Error getting posts")
+  }
+
+  return post, nil
+}
 
 func CreatePost(post models.Post)(*models.Post, error){
   if  len(post.Teachers) < 0 || post.Content == "" || post.Name == "" {
@@ -22,5 +41,4 @@ func CreatePost(post models.Post)(*models.Post, error){
   }
 
   return &post, nil
-
 }

@@ -155,6 +155,7 @@ func GetAllClasses() (*[]models.Class, error) {
   rows, err := database.DB.Query("SELECT id, name FROM classes")
 
   if err != nil {
+    println(err.Error())
     return nil, errors.New("Error getting classes")
   }
 
