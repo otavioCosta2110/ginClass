@@ -83,6 +83,24 @@ func GetPostById (id string) (*models.Post, error) {
   return &post, nil
 }
 
+func GetMaterialById (id string) (string, error) {
+  rows, err := database.DB.Query("SELECT content FROM materials WHERE id = $1", id)
+
+  if err != nil {
+    return "", errors.New("Error getting material")
+  }
+
+  var material string
+
+  for rows.Next() {
+    if err := rows.Scan(&material); err != nil {
+      return "", errors.New("Error scanning material")
+    }
+  }
+
+  return material, nil
+}
+
 func CreatePost (post models.Post) (error) {
 
   tx, err := database.DB.Begin()

@@ -28,6 +28,16 @@ func GetPostById(id string) (*models.Post, error){
   return post, nil
 }
 
+func GetMaterialById(id string) (string, error){
+  material, err := repositories.GetMaterialById(id)
+
+  if err != nil {
+    return "", errors.New("Error getting posts")
+  }
+
+  return material, nil
+}
+
 func CreatePost(post models.Post)(*models.Post, error){
   if  len(post.Teachers) < 0 || post.Content == "" || post.Name == "" {
     return nil, errors.New("Missing Fields")

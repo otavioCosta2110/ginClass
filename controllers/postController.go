@@ -31,6 +31,18 @@ func GetPostById(c *gin.Context){
   c.IndentedJSON(http.StatusOK, gin.H{"data": post})
 }
 
+func GetMaterialById(c *gin.Context){
+  id := c.Param("id")
+  material, err := services.GetMaterialById(id)
+
+  if err != nil {
+    c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+    return
+  }
+
+  c.IndentedJSON(http.StatusOK, gin.H{"data": material})
+}
+
 func CreatePost(c *gin.Context){
   var postBody models.Post
   c.BindJSON(&postBody)

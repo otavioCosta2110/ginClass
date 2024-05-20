@@ -12,6 +12,7 @@ func PostRoutes(router *gin.Engine) {
     postGroup.POST("/create", controllers.CreatePost)
     postGroup.GET("/getbyclass/:class", controllers.GetPostByClass)
     postGroup.GET("/getbyid/:id", controllers.GetPostById)
+    postGroup.GET("/getmaterialbyid/:id", controllers.GetMaterialById)
   }
 }
 
