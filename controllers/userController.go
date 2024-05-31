@@ -11,7 +11,7 @@ func GetUserByEmail(c *gin.Context){
   email := c.Param("email")
   user, err := services.GetUserByEmail(email)
   if err != nil {
-    c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": "Error getting user by email"})
+    c.IndentedJSON(http.StatusInternalServerError, gin.H{"error": "Error getting user by email"})
   }
   c.IndentedJSON(http.StatusOK, &user)
 }
@@ -19,10 +19,10 @@ func GetUserByEmail(c *gin.Context){
 func GetAllUsers(c *gin.Context) {
   users, err := services.GetAllUsers()
   if err != nil {
-    c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": "Error getting users"})
+    c.IndentedJSON(http.StatusInternalServerError, gin.H{"error": "Error getting users"})
   }
 
-  c.IndentedJSON(http.StatusOK, users)
+  c.IndentedJSON(http.StatusOK, gin.H{"data": users})
 }
 
 func CreateUser(c *gin.Context) {
@@ -31,8 +31,24 @@ func CreateUser(c *gin.Context) {
   createdUser, err := services.CreateUser(user)
 
   if err != nil{
-    c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+    c.IndentedJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
   }
 
   c.IndentedJSON(http.StatusOK, gin.H{"message": "User " + createdUser.Name +" created!"})
 }
+
+func Login(c *gin.Context) {
+  var userLogin models.UserLogin
+  c.BindJSON(&userLogin)
+
+  user, err := services.Login(userLogin.Email, userLogin.Password)
+
+  if err != nil {
+    c.IndentedJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+    return
+  }
+
+  c.SetCookie("session_token", userLogin.Email, 3600, "/", "localhost", false, true)
+  c.IndentedJSON(http.StatusOK, gin.H{"data": user})
+}
+

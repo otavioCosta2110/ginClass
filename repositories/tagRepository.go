@@ -66,3 +66,24 @@ func GetTagByID(id string) (*models.Tag, error){
 
   return nil, nil
 }
+
+func GetAllTags()([]string, error) {
+  rows, err := database.DB.Query("SELECT name FROM tags")
+  
+  if err != nil {
+    return nil, err
+  }
+
+  defer rows.Close()
+
+  var tags []string
+
+  for rows.Next() {
+    var tag string
+    if err := rows.Scan(&tag); err != nil {
+      return nil, err
+    }
+    tags = append(tags, tag)
+  }
+  return tags, nil
+}

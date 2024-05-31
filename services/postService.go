@@ -39,7 +39,7 @@ func GetMaterialById(id string) (string, error){
 }
 
 func CreatePost(post models.Post)(*models.Post, error){
-  if  len(post.Teachers) < 0 || post.Content == "" || post.Name == "" {
+  if  len(post.Teachers) <= 0 || post.Content == "" || post.Name == "" {
     return nil, errors.New("Missing Fields")
   }
   post.ID = uuid.NewString()

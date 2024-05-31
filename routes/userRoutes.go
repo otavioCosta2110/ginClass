@@ -12,5 +12,6 @@ func UserRoutes(router *gin.Engine) {
     userGroup.GET("/getall", controllers.GetAllUsers)
     userGroup.GET("/getbyemail/:email", controllers.GetUserByEmail)
     userGroup.POST("/create", controllers.CreateUser)
+    userGroup.POST("/login", controllers.Login)
   }
 }

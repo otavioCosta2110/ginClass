@@ -66,5 +66,5 @@ func GetAllClasses(c *gin.Context) {
     return
   }
 
-  c.IndentedJSON(http.StatusOK, classes)
+  c.IndentedJSON(http.StatusOK, gin.H{"data": classes})
 }

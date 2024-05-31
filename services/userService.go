@@ -6,6 +6,7 @@ import (
 	"otaviocosta2110/ginClass/repositories"
 
 	"github.com/google/uuid"
+	"golang.org/x/crypto/bcrypt"
 )
 
 func GetUserByEmail(email string) (*models.User, error) {
@@ -17,7 +18,7 @@ func GetUserByEmail(email string) (*models.User, error) {
   return user, nil
 }
 
-func GetAllUsers() (*[]models.User, error) {
+func GetAllUsers() (*[]string , error) {
   users, err := repositories.GetAllUsers();
 
   if err != nil {
@@ -33,6 +34,14 @@ func CreateUser(user models.User) (*models.User, error) {
   }
 
   user.ID = uuid.New().String()
+  hashedPasswordBytes, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost);
+
+  if err != nil {
+    return nil, errors.New("Error hashing password")
+  }
+
+  hashedPassword := string(hashedPasswordBytes)
+  user.Password = hashedPassword
 
   foundUser, _ := repositories.GetUserByEmail(user.Email);
 
@@ -40,7 +49,7 @@ func CreateUser(user models.User) (*models.User, error) {
     return nil, errors.New("User Already Exists")
   }
 
-  err := repositories.CreateUser(user)
+  err = repositories.CreateUser(user)
 
   if err != nil {
     return nil, err
@@ -48,3 +57,19 @@ func CreateUser(user models.User) (*models.User, error) {
 
   return &user, nil
 }
+
+func Login(userEmail string, password string) (*models.User, error) {
+  user, err := GetUserByEmail(userEmail)
+
+  if err != nil {
+    return nil, err
+  }
+
+  err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
+  if err != nil {
+    return nil, errors.New("Invalid Password")
+  }
+
+  return user, nil
+}
+

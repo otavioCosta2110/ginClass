@@ -22,5 +22,6 @@ func main(){
   routes.UserRoutes(router)
   routes.ClassRoutes(router)
   routes.PostRoutes(router)
+  routes.TagRoutes(router)
   router.Run(":8080")
 }

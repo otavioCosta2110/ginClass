@@ -8,7 +8,7 @@ import (
 )
 
 func GetUserByEmail(email string) (*models.User, error) {
-  rows, err := database.DB.Query("SELECT id, email, name, isteacher FROM users WHERE email = $1", email)
+  rows, err := database.DB.Query("SELECT id, email, name, password, isteacher FROM users WHERE email = $1", email)
 
   if err != nil {
     return nil, errors.New("Error getting user")
@@ -19,7 +19,7 @@ func GetUserByEmail(email string) (*models.User, error) {
 
   for rows.Next() {
 
-    if err := rows.Scan(&user.ID, &user.Email, &user.Name, &user.IsTeacher); err != nil {
+    if err := rows.Scan(&user.ID, &user.Email, &user.Name, &user.Password, &user.IsTeacher); err != nil {
       return nil, errors.New("Error Scanning user")
     }
   
@@ -52,8 +52,8 @@ func GetUserByID(id string) (*models.User, error) {
   return nil, nil
 }
 
-func GetAllUsers() (*[]models.User, error){
-  rows, err := database.DB.Query("SELECT id, name FROM users")
+func GetAllUsers() (*[]string, error){
+  rows, err := database.DB.Query("SELECT email FROM users")
   
   if err != nil {
     return nil, err
@@ -61,11 +61,12 @@ func GetAllUsers() (*[]models.User, error){
 
   defer rows.Close()
 
-  var users []models.User
+  var users []string
 
   for rows.Next() {
-    var user models.User
-    if err := rows.Scan(&user.ID, &user.Name); err != nil {
+    var user string
+    if err := rows.Scan(&user); err != nil {
+      println(err.Error())
       return nil, errors.New("Error getting users")
     }
     users = append(users, user)
